@@ -21,7 +21,7 @@ import {
   type Product,
   type Voucher,
   type OrderRecord,
-  type UserProfile,
+  type UserProfile
 } from './supabaseClient';
 
 const RAW = `ASUS|G|Dual GeForce RTX 5060 OC 8GB|27995|NVIDIA GeForce RTX 5060;8GB GDDR7;PCIe 5.0 x8
@@ -43,32 +43,21 @@ const CATS: Record<string, string> = {
   L: 'Laptops',
   R: 'Memory',
   S: 'Storage',
-  A: 'Accessories',
+  A: 'Accessories'
 };
 
 const PHOTO_MAP: Record<string, string> = {
-  'Dual GeForce RTX 5060 OC 8GB':
-    'https://dlcdnwebimgs.asus.com/gain/86b4328e-2023-4c9a-9f5c-08862849982c/w800',
-  'ROG Strix GeForce RTX 5070 Ti OC 16GB':
-    'https://dlcdnwebimgs.asus.com/gain/72186e56-6f15-4a12-8b9f-4e8513c8791a/w800',
-  'GeForce RTX 5060 Ventus 2X OC 8GB':
-    'https://asset.msi.com/resize/image/global/product/product_17447021810968098229058957825702.png62405b38c58fe0f07fcef2367d8a9ba1/600.png',
-  'GeForce RTX 5070 Gaming Trio OC 12GB':
-    'https://asset.msi.com/resize/image/global/product/product_17361458559562844522424295248477.png62405b38c58fe0f07fcef2367d8a9ba1/600.png',
-  'Nitro XV272U V3 27" QHD 180Hz':
-    'https://images.acer.com/is/image/acer/Nitro-XV272U-V3-01?$Product-Cards-XL$',
-  'Odyssey G5 27" QHD 165Hz':
-    'https://images.samsung.com/is/image/samsung/p6pim/ph/ls27cg552eexxp/gallery/ph-odyssey-g5-g55c-ls27cg552eexxp-539359498?$650_519_PNG$',
-  'LOQ 15IAX9 Gaming Laptop':
-    'https://p3-ofp.static.pub/fes/cms/2024/05/17/056771019370003711689143902935613895.png',
-  'TUF Gaming A15 FA507':
-    'https://dlcdnwebimgs.asus.com/gain/1b28801c-3f55-4349-9072-182079803371/w800',
-  'Vengeance DDR5-6000 32GB (2×16GB) CL30':
-    'https://assets.corsair.com/image/upload/c_pad,q_auto,h_600,w_600/products/Memory/vengeance-ddr5-blk-config/Gallery/Vengeance-DDR5-2UP-32GB-BLACK_01.webp',
-  '990 PRO 1TB NVMe SSD':
-    'https://images.samsung.com/is/image/samsung/p6pim/ph/mz-v9p1t0bw/gallery/ph-990-pro-nvme-m2-ssd-mz-v9p1t0bw-534292116?$650_519_PNG$',
-  'KC3000 1TB NVMe SSD':
-    'https://media.kingston.com/kingston/product/ktc-product-ssd-kc3000-1024gb-1-zm-lg.jpg',
+  'Dual GeForce RTX 5060 OC 8GB': 'https://dlcdnwebimgs.asus.com/gain/86b4328e-2023-4c9a-9f5c-08862849982c/w800',
+  'ROG Strix GeForce RTX 5070 Ti OC 16GB': 'https://dlcdnwebimgs.asus.com/gain/72186e56-6f15-4a12-8b9f-4e8513c8791a/w800',
+  'GeForce RTX 5060 Ventus 2X OC 8GB': 'https://asset.msi.com/resize/image/global/product/product_17447021810968098229058957825702.png62405b38c58fe0f07fcef2367d8a9ba1/600.png',
+  'GeForce RTX 5070 Gaming Trio OC 12GB': 'https://asset.msi.com/resize/image/global/product/product_17361458559562844522424295248477.png62405b38c58fe0f07fcef2367d8a9ba1/600.png',
+  'Nitro XV272U V3 27" QHD 180Hz': 'https://images.acer.com/is/image/acer/Nitro-XV272U-V3-01?$Product-Cards-XL$',
+  'Odyssey G5 27" QHD 165Hz': 'https://images.samsung.com/is/image/samsung/p6pim/ph/ls27cg552eexxp/gallery/ph-odyssey-g5-g55c-ls27cg552eexxp-539359498?$650_519_PNG$',
+  'LOQ 15IAX9 Gaming Laptop': 'https://p3-ofp.static.pub/fes/cms/2024/05/17/056771019370003711689143902935613895.png',
+  'TUF Gaming A15 FA507': 'https://dlcdnwebimgs.asus.com/gain/1b28801c-3f55-4349-9072-182079803371/w800',
+  'Vengeance DDR5-6000 32GB (2×16GB) CL30': 'https://assets.corsair.com/image/upload/c_pad,q_auto,h_600,w_600/products/Memory/vengeance-ddr5-blk-config/Gallery/Vengeance-DDR5-2UP-32GB-BLACK_01.webp',
+  '990 PRO 1TB NVMe SSD': 'https://images.samsung.com/is/image/samsung/p6pim/ph/mz-v9p1t0bw/gallery/ph-990-pro-nvme-m2-ssd-mz-v9p1t0bw-534292116?$650_519_PNG$',
+  'KC3000 1TB NVMe SSD': 'https://media.kingston.com/kingston/product/ktc-product-ssd-kc3000-1024gb-1-zm-lg.jpg'
 };
 
 const CAT_PHOTO: Record<string, string> = {
@@ -77,7 +66,7 @@ const CAT_PHOTO: Record<string, string> = {
   L: 'https://dlcdnwebimgs.asus.com/gain/1b28801c-3f55-4349-9072-182079803371/w800',
   R: 'https://assets.corsair.com/image/upload/c_pad,q_auto,h_600,w_600/products/Memory/vengeance-ddr5-blk-config/Gallery/Vengeance-DDR5-2UP-32GB-BLACK_01.webp',
   S: 'https://images.samsung.com/is/image/samsung/p6pim/ph/mz-v9p1t0bw/gallery/ph-990-pro-nvme-m2-ssd-mz-v9p1t0bw-534292116?$650_519_PNG$',
-  A: 'https://assets.corsair.com/image/upload/c_pad,q_auto,h_600,w_600/products/Gaming-Mice/CH-9309411-NA/Gallery/KATAR_PRO_WIRELESS_01.webp',
+  A: 'https://assets.corsair.com/image/upload/c_pad,q_auto,h_600,w_600/products/Gaming-Mice/CH-9309411-NA/Gallery/KATAR_PRO_WIRELESS_01.webp'
 };
 
 const seedProducts = (): Product[] =>
@@ -91,16 +80,13 @@ const seedProducts = (): Product[] =>
       price: Number(price),
       spec: specStr.split(';'),
       stock: 10 + (i % 7) * 3,
-      photo: '',
+      photo: ''
     };
   });
 
-const peso = (n: number) =>
-  '₱' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const peso = (n: number) => '₱' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-function compressPhoto(
-  file: File
-): Promise<{ blob: Blob; previewUrl: string }> {
+function compressPhoto(file: File): Promise<{ blob: Blob; previewUrl: string }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = reject;
@@ -139,9 +125,7 @@ function ProductPhoto({ product }: { product: Product }) {
   );
 
   useEffect(() => {
-    setSrc(
-      product.photo || PHOTO_MAP[product.name] || CAT_PHOTO[product.cat] || ''
-    );
+    setSrc(product.photo || PHOTO_MAP[product.name] || CAT_PHOTO[product.cat] || '');
   }, [product.photo, product.name, product.cat]);
 
   return (
@@ -153,9 +137,7 @@ function ProductPhoto({ product }: { product: Product }) {
         if (src !== CAT_PHOTO[product.cat] && CAT_PHOTO[product.cat]) {
           setSrc(CAT_PHOTO[product.cat]);
         } else {
-          setSrc(
-            'https://placehold.co/600x400/1A2540/EEF2F8?text=TechHub+Hardware'
-          );
+          setSrc('https://placehold.co/600x400/1A2540/EEF2F8?text=TechHub+Hardware');
         }
       }}
     />
@@ -170,9 +152,7 @@ export default function App() {
   const [user, setUser] = useState<UserProfile | null>(null);
 
   const [view, setView] = useState<'shop' | 'panel'>('shop');
-  const [panelTab, setPanelTab] = useState<
-    'products' | 'orders' | 'vouchers' | 'users'
-  >('products');
+  const [panelTab, setPanelTab] = useState<'products' | 'orders' | 'vouchers' | 'users'>('products');
   const [cat, setCat] = useState('all');
   const [brand, setBrand] = useState('all');
   const [search, setSearch] = useState('');
@@ -180,15 +160,11 @@ export default function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [showPassword, setShowPassword] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [toastMsg, setToastMsg] = useState('');
 
-  const [authForm, setAuthForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-  });
+  const [authForm, setAuthForm] = useState({ name: '', email: '', phone: '', password: '' });
   const [authError, setAuthError] = useState('');
 
   const [newProd, setNewProd] = useState({
@@ -197,8 +173,21 @@ export default function App() {
     name: '',
     price: '',
     stock: '10',
-    spec: '',
+    spec: ''
   });
+
+  const openAuthModal = (mode: 'login' | 'signup') => {
+    setAuthMode(mode);
+    setAuthError('');
+    setShowPassword(false);
+    setAuthOpen(true);
+  };
+
+  const closeAuthModal = () => {
+    setAuthOpen(false);
+    setAuthError('');
+    setShowPassword(false);
+  };
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -211,7 +200,7 @@ export default function App() {
       const [pRows, vRows, oRows] = await Promise.all([
         fetchProducts(),
         fetchVouchers(),
-        fetchOrders(),
+        fetchOrders()
       ]);
       if (pRows && pRows.length) setProducts(pRows);
       if (vRows) setVouchers(vRows);
@@ -238,9 +227,7 @@ export default function App() {
     })();
   }, []);
 
-  const isStaff = Boolean(
-    user && user.active && ['staff', 'admin'].includes(user.role)
-  );
+  const isStaff = Boolean(user && user.active && ['staff', 'admin'].includes(user.role));
   const isAdmin = Boolean(user && user.active && user.role === 'admin');
 
   const brands = useMemo(
@@ -282,8 +269,7 @@ export default function App() {
   const handleCheckout = async () => {
     if (!user) {
       setCartOpen(false);
-      setAuthMode('login');
-      setAuthOpen(true);
+      openAuthModal('login');
       return;
     }
     if (!cartList.length) return;
@@ -298,13 +284,9 @@ export default function App() {
         id: x.p.id,
         name: `${x.p.brand} ${x.p.name}`,
         price: x.p.price,
-        q: x.q,
+        q: x.q
       })),
-      addr: {
-        line: 'Pickup / Verified Member',
-        city: 'Iligan City',
-        zip: '9200',
-      },
+      addr: { line: 'Pickup / Verified Member', city: 'Iligan City', zip: '9200' },
       pay: { type: 'cod', label: 'Cash on delivery', last: '' },
       ship: 'std',
       shipFee,
@@ -314,16 +296,14 @@ export default function App() {
       total: cartSubtotal + shipFee,
       status: 'Pending',
       log: [{ s: 'Pending', t: Date.now(), by: user.name }],
-      created: Date.now(),
+      created: Date.now()
     };
 
     try {
       for (const x of cartList) {
         const nextStock = Math.max(0, x.p.stock - x.q);
         setProducts((prev) =>
-          prev.map((item) =>
-            item.id === x.p.id ? { ...item, stock: nextStock } : item
-          )
+          prev.map((item) => (item.id === x.p.id ? { ...item, stock: nextStock } : item))
         );
         await updateProductRecord(x.p.id, { stock: nextStock });
       }
@@ -341,19 +321,17 @@ export default function App() {
     e.preventDefault();
     setAuthError('');
     if (!isCloudEnabled()) {
-      setAuthError(
-        'Add your Supabase anon key in src/supabaseClient.js first.'
-      );
+      setAuthError('Add your Supabase anon key in src/supabaseClient.js first.');
       return;
     }
     try {
       if (authMode === 'login') {
         const loggedIn = await signInUser({
           email: authForm.email.trim(),
-          password: authForm.password,
+          password: authForm.password
         });
         setUser(loggedIn);
-        setAuthOpen(false);
+        closeAuthModal();
         await loadAllCloud(loggedIn);
         showToast(`Welcome back, ${loggedIn.name}!`);
       } else {
@@ -361,23 +339,19 @@ export default function App() {
           name: authForm.name.trim(),
           email: authForm.email.trim(),
           phone: authForm.phone.trim(),
-          password: authForm.password,
+          password: authForm.password
         });
         if (!created) {
-          setAuthError(
-            'Check your email to confirm your account, then log in.'
-          );
+          setAuthError('Check your email to confirm your account, then log in.');
           return;
         }
         setUser(created);
-        setAuthOpen(false);
+        closeAuthModal();
         await loadAllCloud(created);
         showToast(`Account created for ${created.name}!`);
       }
     } catch (err: unknown) {
-      setAuthError(
-        err instanceof Error ? err.message : 'Authentication failed'
-      );
+      setAuthError(err instanceof Error ? err.message : 'Authentication failed');
     }
   };
 
@@ -395,19 +369,12 @@ export default function App() {
         .split(';')
         .map((s) => s.trim())
         .filter(Boolean),
-      photo: '',
+      photo: ''
     };
     try {
       await createProductRecord(item);
       setProducts((prev) => [item, ...prev]);
-      setNewProd({
-        brand: '',
-        cat: 'G',
-        name: '',
-        price: '',
-        stock: '10',
-        spec: '',
-      });
+      setNewProd({ brand: '', cat: 'G', name: '', price: '', stock: '10', spec: '' });
       showToast('Product saved to Supabase');
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Could not add product');
@@ -418,10 +385,7 @@ export default function App() {
     if (!isStaff || !file) return;
     try {
       const { blob, previewUrl } = await compressPhoto(file);
-      const url =
-        (isCloudEnabled()
-          ? await uploadProductPhoto(productId, blob)
-          : previewUrl) || previewUrl;
+      const url = (isCloudEnabled() ? await uploadProductPhoto(productId, blob) : previewUrl) || previewUrl;
       await updateProductRecord(productId, { photo: url });
       setProducts((prev) =>
         prev.map((p) => (p.id === productId ? { ...p, photo: url } : p))
@@ -497,22 +461,12 @@ export default function App() {
               Logout
             </button>
           ) : (
-            <button
-              className="hb pr"
-              onClick={() => {
-                setAuthMode('login');
-                setAuthOpen(true);
-              }}
-            >
+            <button className="hb pr" onClick={() => openAuthModal('login')}>
               Log in
             </button>
           )}
 
-          <button
-            className="ib"
-            onClick={() => setCartOpen(true)}
-            aria-label="Cart"
-          >
+          <button className="ib" onClick={() => setCartOpen(true)} aria-label="Cart">
             🛒
             {cartCount > 0 && <span className="cnt">{cartCount}</span>}
           </button>
@@ -524,13 +478,11 @@ export default function App() {
           <>
             <section className="hero">
               <span className="pill">
-                React + Vite + Supabase ·{' '}
-                {isCloudEnabled() ? 'Live Cloud' : 'Local Preview'}
+                React + Vite + Supabase · {isCloudEnabled() ? 'Live Cloud' : 'Local Preview'}
               </span>
               <h1>TechHub Mobile Store</h1>
               <p>
-                GPUs, monitors, laptops, memory, and SSDs with live Supabase
-                database &amp; storage.
+                GPUs, monitors, laptops, memory, and SSDs with live Supabase database &amp; storage.
               </p>
             </section>
 
@@ -569,16 +521,8 @@ export default function App() {
                     <span className="br">{p.brand}</span>
                     <h3 onClick={() => setSelectedProduct(p)}>{p.name}</h3>
                     <div className="pr">{peso(p.price)}</div>
-                    <span
-                      className={`st ${
-                        p.stock <= 0 ? 'out' : p.stock <= 5 ? 'low' : ''
-                      }`}
-                    >
-                      {p.stock <= 0
-                        ? 'Sold out'
-                        : p.stock <= 5
-                        ? `${p.stock} left`
-                        : 'In stock'}
+                    <span className={`st ${p.stock <= 0 ? 'out' : p.stock <= 5 ? 'low' : ''}`}>
+                      {p.stock <= 0 ? 'Sold out' : p.stock <= 5 ? `${p.stock} left` : 'In stock'}
                     </span>
                     <button
                       className="add"
@@ -595,18 +539,16 @@ export default function App() {
         ) : (
           <section style={{ padding: '16px 0 36px' }}>
             <div className="chips">
-              {(['products', 'orders', 'vouchers', 'users'] as const).map(
-                (tab) => (
-                  <button
-                    key={tab}
-                    className="chip"
-                    aria-pressed={panelTab === tab}
-                    onClick={() => setPanelTab(tab)}
-                  >
-                    {tab.toUpperCase()}
-                  </button>
-                )
-              )}
+              {(['products', 'orders', 'vouchers', 'users'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  className="chip"
+                  aria-pressed={panelTab === tab}
+                  onClick={() => setPanelTab(tab)}
+                >
+                  {tab.toUpperCase()}
+                </button>
+              ))}
             </div>
 
             {panelTab === 'products' && (
@@ -619,17 +561,13 @@ export default function App() {
                       className="in"
                       required
                       value={newProd.brand}
-                      onChange={(e) =>
-                        setNewProd({ ...newProd, brand: e.target.value })
-                      }
+                      onChange={(e) => setNewProd({ ...newProd, brand: e.target.value })}
                     />
                     <label className="f">Category</label>
                     <select
                       className="in"
                       value={newProd.cat}
-                      onChange={(e) =>
-                        setNewProd({ ...newProd, cat: e.target.value })
-                      }
+                      onChange={(e) => setNewProd({ ...newProd, cat: e.target.value })}
                     >
                       {Object.entries(CATS).map(([k, l]) => (
                         <option key={k} value={k}>
@@ -642,9 +580,7 @@ export default function App() {
                       className="in"
                       required
                       value={newProd.name}
-                      onChange={(e) =>
-                        setNewProd({ ...newProd, name: e.target.value })
-                      }
+                      onChange={(e) => setNewProd({ ...newProd, name: e.target.value })}
                     />
                     <label className="f">Price (₱)</label>
                     <input
@@ -652,9 +588,7 @@ export default function App() {
                       type="number"
                       required
                       value={newProd.price}
-                      onChange={(e) =>
-                        setNewProd({ ...newProd, price: e.target.value })
-                      }
+                      onChange={(e) => setNewProd({ ...newProd, price: e.target.value })}
                     />
                     <label className="f">Stock</label>
                     <input
@@ -662,18 +596,14 @@ export default function App() {
                       type="number"
                       required
                       value={newProd.stock}
-                      onChange={(e) =>
-                        setNewProd({ ...newProd, stock: e.target.value })
-                      }
+                      onChange={(e) => setNewProd({ ...newProd, stock: e.target.value })}
                     />
                     <label className="f">Specs (separate with ;)</label>
                     <input
                       className="in"
                       placeholder="16GB GDDR7; PCIe 5.0; Triple Fan"
                       value={newProd.spec}
-                      onChange={(e) =>
-                        setNewProd({ ...newProd, spec: e.target.value })
-                      }
+                      onChange={(e) => setNewProd({ ...newProd, spec: e.target.value })}
                     />
                     <button className="btn" style={{ marginTop: 12 }}>
                       Save Product
@@ -696,9 +626,7 @@ export default function App() {
                           <input
                             type="number"
                             value={p.stock}
-                            onChange={(e) =>
-                              handleStockChange(p.id, e.target.value)
-                            }
+                            onChange={(e) => handleStockChange(p.id, e.target.value)}
                           />
                         </label>
                         <label className="up">
@@ -706,9 +634,7 @@ export default function App() {
                           <input
                             type="file"
                             accept="image/*"
-                            onChange={(e) =>
-                              handlePhotoUpload(p.id, e.target.files?.[0])
-                            }
+                            onChange={(e) => handlePhotoUpload(p.id, e.target.files?.[0])}
                           />
                         </label>
                         {isAdmin && (
@@ -744,21 +670,13 @@ export default function App() {
                         await updateOrderRecord(o.id, { status: nextStatus });
                         setOrders((prev) =>
                           prev.map((item) =>
-                            item.id === o.id
-                              ? { ...item, status: nextStatus }
-                              : item
+                            item.id === o.id ? { ...item, status: nextStatus } : item
                           )
                         );
                         showToast(`Order ${o.no} → ${nextStatus}`);
                       }}
                     >
-                      {[
-                        'Pending',
-                        'Packed',
-                        'Shipped',
-                        'Delivered',
-                        'Cancelled',
-                      ].map((st) => (
+                      {['Pending', 'Packed', 'Shipped', 'Delivered', 'Cancelled'].map((st) => (
                         <option key={st} value={st}>
                           {st}
                         </option>
@@ -777,14 +695,10 @@ export default function App() {
                       className="sm alt"
                       onClick={async () => {
                         const nextActive = !v.active;
-                        await updateVoucherRecord(v.code, {
-                          active: nextActive,
-                        });
+                        await updateVoucherRecord(v.code, { active: nextActive });
                         setVouchers((prev) =>
                           prev.map((item) =>
-                            item.code === v.code
-                              ? { ...item, active: nextActive }
-                              : item
+                            item.code === v.code ? { ...item, active: nextActive } : item
                           )
                         );
                       }}
@@ -808,9 +722,7 @@ export default function App() {
                         const nextRole = e.target.value;
                         await updateProfileRecord(pr.id, { role: nextRole });
                         setProfiles((prev) =>
-                          prev.map((x) =>
-                            x.id === pr.id ? { ...x, role: nextRole } : x
-                          )
+                          prev.map((x) => (x.id === pr.id ? { ...x, role: nextRole } : x))
                         );
                         showToast('Role updated');
                       }}
@@ -907,28 +819,36 @@ export default function App() {
       )}
 
       {authOpen && (
-        <div className="modal-bg" onClick={() => setAuthOpen(false)}>
+        <div className="modal-bg" onClick={closeAuthModal}>
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
             <div className="sh">
-              <h2>
-                {authMode === 'login' ? 'Log in to TechHub' : 'Create Account'}
-              </h2>
-              <button className="ib" onClick={() => setAuthOpen(false)}>
+              <h2>{authMode === 'login' ? 'Log in to TechHub' : 'Create Account'}</h2>
+              <button className="ib" onClick={closeAuthModal}>
                 ✕
               </button>
             </div>
             <div className="chips">
               <button
+                type="button"
                 className="chip"
                 aria-pressed={authMode === 'login'}
-                onClick={() => setAuthMode('login')}
+                onClick={() => {
+                  setAuthMode('login');
+                  setAuthError('');
+                  setShowPassword(false);
+                }}
               >
                 Log in
               </button>
               <button
+                type="button"
                 className="chip"
                 aria-pressed={authMode === 'signup'}
-                onClick={() => setAuthMode('signup')}
+                onClick={() => {
+                  setAuthMode('signup');
+                  setAuthError('');
+                  setShowPassword(false);
+                }}
               >
                 Sign up
               </button>
@@ -941,18 +861,14 @@ export default function App() {
                     className="in"
                     required
                     value={authForm.name}
-                    onChange={(e) =>
-                      setAuthForm({ ...authForm, name: e.target.value })
-                    }
+                    onChange={(e) => setAuthForm({ ...authForm, name: e.target.value })}
                   />
                   <label className="f">Mobile Number</label>
                   <input
                     className="in"
                     placeholder="09xxxxxxxxx"
                     value={authForm.phone}
-                    onChange={(e) =>
-                      setAuthForm({ ...authForm, phone: e.target.value })
-                    }
+                    onChange={(e) => setAuthForm({ ...authForm, phone: e.target.value })}
                   />
                 </>
               )}
@@ -962,20 +878,26 @@ export default function App() {
                 type="email"
                 required
                 value={authForm.email}
-                onChange={(e) =>
-                  setAuthForm({ ...authForm, email: e.target.value })
-                }
+                onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
               />
               <label className="f">Password</label>
-              <input
-                className="in"
-                type="password"
-                required
-                value={authForm.password}
-                onChange={(e) =>
-                  setAuthForm({ ...authForm, password: e.target.value })
-                }
-              />
+              <div className="pw-row">
+                <input
+                  className="in"
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={authForm.password}
+                  onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
+                />
+                <button
+                  type="button"
+                  className="pw-tog"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
               {authError && <div className="em">{authError}</div>}
               <button className="btn" style={{ marginTop: 14 }}>
                 {authMode === 'login' ? 'Log in' : 'Sign up'}
@@ -1001,8 +923,7 @@ export default function App() {
           className={view === 'panel' ? 'on' : ''}
           onClick={() => {
             if (!user) {
-              setAuthMode('login');
-              setAuthOpen(true);
+              openAuthModal('login');
             } else if (isStaff) {
               setView(view === 'panel' ? 'shop' : 'panel');
             } else {
