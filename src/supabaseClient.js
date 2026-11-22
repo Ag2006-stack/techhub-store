@@ -17,6 +17,11 @@ function getErrMessage(err, fallback) {
   return fallback;
 }
 
+function firstRow(data, fallback = null) {
+  if (Array.isArray(data)) return data[0] ?? fallback;
+  return data ?? fallback;
+}
+
 export async function fetchProducts() {
   const { data, error } = await supabase
     .from('products')
@@ -30,24 +35,24 @@ export async function createProductRecord(prod) {
   const { data, error } = await supabase
     .from('products')
     .insert(prod)
-    .select()
-    .single();
+    .select();
   if (error) throw new Error(getErrMessage(error, 'Failed to create product'));
-  return data;
+  return firstRow(data, prod);
 }
 
 export async function updateProductRecord(id, patch) {
+  if (!id) return null;
   const { data, error } = await supabase
     .from('products')
     .update(patch)
     .eq('id', id)
-    .select()
-    .single();
+    .select();
   if (error) throw new Error(getErrMessage(error, 'Failed to update product'));
-  return data;
+  return firstRow(data, null);
 }
 
 export async function deleteProductRecord(id) {
+  if (!id) return;
   const { error } = await supabase.from('products').delete().eq('id', id);
   if (error) throw new Error(getErrMessage(error, 'Failed to delete product'));
 }
@@ -70,8 +75,14 @@ export async function fetchVouchers() {
 }
 
 export async function updateVoucherRecord(code, patch) {
-  const { error } = await supabase.from('vouchers').update(patch).eq('code', code);
+  if (!code) return null;
+  const { data, error } = await supabase
+    .from('vouchers')
+    .update(patch)
+    .eq('code', code)
+    .select();
   if (error) throw new Error(getErrMessage(error, 'Failed to update voucher'));
+  return firstRow(data, null);
 }
 
 export async function fetchOrders() {
@@ -84,18 +95,27 @@ export async function fetchOrders() {
 }
 
 export async function createOrderRecord(order) {
+  const payload = {
+    ...order,
+    id: order.id || `ORD-${Date.now()}`
+  };
   const { data, error } = await supabase
     .from('orders')
-    .insert(order)
-    .select()
-    .single();
+    .insert(payload)
+    .select();
   if (error) throw new Error(getErrMessage(error, 'Failed to create order'));
-  return data;
+  return firstRow(data, payload);
 }
 
 export async function updateOrderRecord(id, patch) {
-  const { error } = await supabase.from('orders').update(patch).eq('id', id);
+  if (!id) return null;
+  const { data, error } = await supabase
+    .from('orders')
+    .update(patch)
+    .eq('id', id)
+    .select();
   if (error) throw new Error(getErrMessage(error, 'Failed to update order'));
+  return firstRow(data, null);
 }
 
 export async function getProfileById(id) {
@@ -104,9 +124,9 @@ export async function getProfileById(id) {
     .from('profiles')
     .select('*')
     .eq('id', id)
-    .single();
+    .maybeSingle();
   if (error) throw new Error(getErrMessage(error, 'Failed to load profile'));
-  return data;
+  return data || null;
 }
 
 export async function signUpUser({ name, email, password, phone }) {
@@ -146,8 +166,7 @@ export async function signUpUser({ name, email, password, phone }) {
   const { data: upserted, error: profileErr } = await supabase
     .from('profiles')
     .upsert(profileRow, { onConflict: 'id' })
-    .select()
-    .single();
+    .select();
 
   if (profileErr) {
     throw new Error(
@@ -155,7 +174,7 @@ export async function signUpUser({ name, email, password, phone }) {
     );
   }
 
-  return upserted || profileRow;
+  return firstRow(upserted, profileRow);
 }
 
 export async function signInUser({ email, password }) {
@@ -192,14 +211,13 @@ export async function signInUser({ email, password }) {
   const { data: createdProfile, error: insertErr } = await supabase
     .from('profiles')
     .upsert(fallbackProfile, { onConflict: 'id' })
-    .select()
-    .single();
+    .select();
 
   if (insertErr) {
     return fallbackProfile;
   }
 
-  return createdProfile || fallbackProfile;
+  return firstRow(createdProfile, fallbackProfile);
 }
 
 export async function signOutUser() {
@@ -214,17 +232,20 @@ export async function getSessionProfile() {
   if (!authUser) return null;
 
   try {
-    return await getProfileById(authUser.id);
+    const profile = await getProfileById(authUser.id);
+    if (profile) return profile;
   } catch {
-    return {
-      id: authUser.id,
-      email: authUser.email || '',
-      name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
-      phone: authUser.user_metadata?.phone || '',
-      role: 'customer',
-      active: true
-    };
+    // Fall through to metadata fallback
   }
+
+  return {
+    id: authUser.id,
+    email: authUser.email || '',
+    name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
+    phone: authUser.user_metadata?.phone || '',
+    role: 'customer',
+    active: true
+  };
 }
 
 export async function fetchAllProfiles() {
@@ -234,6 +255,12 @@ export async function fetchAllProfiles() {
 }
 
 export async function updateProfileRecord(id, patch) {
-  const { error } = await supabase.from('profiles').update(patch).eq('id', id);
+  if (!id) return null;
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(patch)
+    .eq('id', id)
+    .select();
   if (error) throw new Error(getErrMessage(error, 'Failed to update profile'));
+  return firstRow(data, null);
 }
