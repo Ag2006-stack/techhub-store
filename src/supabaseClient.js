@@ -3,12 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 export const SUPABASE_URL = 'https://sjgrcxtxgpwouuugetfl.supabase.co';
 export const SUPABASE_ANON_KEY = 'sb_publishable_K00IFS3IQMpDGkSnz0PYPw_0evx83D9';
 
-export const supabase =
-  SUPABASE_URL &&
-  SUPABASE_ANON_KEY &&
-  !SUPABASE_ANON_KEY.startsWith('PASTE_YOUR_FULL_')
-    ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-    : null;
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export function isCloudEnabled() {
   return Boolean(supabase);
@@ -23,7 +18,6 @@ function getErrMessage(err, fallback) {
 }
 
 export async function fetchProducts() {
-  if (!supabase) return null;
   const { data, error } = await supabase
     .from('products')
     .select('*')
@@ -33,7 +27,6 @@ export async function fetchProducts() {
 }
 
 export async function createProductRecord(prod) {
-  if (!supabase) return prod;
   const { data, error } = await supabase
     .from('products')
     .insert(prod)
@@ -44,7 +37,6 @@ export async function createProductRecord(prod) {
 }
 
 export async function updateProductRecord(id, patch) {
-  if (!supabase) return null;
   const { data, error } = await supabase
     .from('products')
     .update(patch)
@@ -56,13 +48,12 @@ export async function updateProductRecord(id, patch) {
 }
 
 export async function deleteProductRecord(id) {
-  if (!supabase) return;
   const { error } = await supabase.from('products').delete().eq('id', id);
   if (error) throw new Error(getErrMessage(error, 'Failed to delete product'));
 }
 
 export async function uploadProductPhoto(productId, blob) {
-  if (!supabase || !blob) return null;
+  if (!blob) return null;
   const path = `${productId}/${Date.now()}.jpg`;
   const { error } = await supabase.storage
     .from('product-photos')
@@ -73,20 +64,17 @@ export async function uploadProductPhoto(productId, blob) {
 }
 
 export async function fetchVouchers() {
-  if (!supabase) return null;
   const { data, error } = await supabase.from('vouchers').select('*');
   if (error) throw new Error(getErrMessage(error, 'Failed to fetch vouchers'));
   return data || [];
 }
 
 export async function updateVoucherRecord(code, patch) {
-  if (!supabase) return;
   const { error } = await supabase.from('vouchers').update(patch).eq('code', code);
   if (error) throw new Error(getErrMessage(error, 'Failed to update voucher'));
 }
 
 export async function fetchOrders() {
-  if (!supabase) return null;
   const { data, error } = await supabase
     .from('orders')
     .select('*')
@@ -96,7 +84,6 @@ export async function fetchOrders() {
 }
 
 export async function createOrderRecord(order) {
-  if (!supabase) return order;
   const { data, error } = await supabase
     .from('orders')
     .insert(order)
@@ -107,13 +94,12 @@ export async function createOrderRecord(order) {
 }
 
 export async function updateOrderRecord(id, patch) {
-  if (!supabase) return;
   const { error } = await supabase.from('orders').update(patch).eq('id', id);
   if (error) throw new Error(getErrMessage(error, 'Failed to update order'));
 }
 
 export async function getProfileById(id) {
-  if (!supabase || !id) return null;
+  if (!id) return null;
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
@@ -124,12 +110,6 @@ export async function getProfileById(id) {
 }
 
 export async function signUpUser({ name, email, password, phone }) {
-  if (!supabase) {
-    throw new Error(
-      'Supabase is not configured. Paste your Publishable key into SUPABASE_ANON_KEY in src/supabaseClient.js.'
-    );
-  }
-
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -179,12 +159,6 @@ export async function signUpUser({ name, email, password, phone }) {
 }
 
 export async function signInUser({ email, password }) {
-  if (!supabase) {
-    throw new Error(
-      'Supabase is not configured. Paste your Publishable key into SUPABASE_ANON_KEY in src/supabaseClient.js.'
-    );
-  }
-
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password
@@ -229,13 +203,11 @@ export async function signInUser({ email, password }) {
 }
 
 export async function signOutUser() {
-  if (!supabase) return;
   const { error } = await supabase.auth.signOut();
   if (error) throw new Error(getErrMessage(error, 'Failed to log out'));
 }
 
 export async function getSessionProfile() {
-  if (!supabase) return null;
   const { data, error } = await supabase.auth.getSession();
   if (error) return null;
   const authUser = data?.session?.user;
@@ -256,14 +228,12 @@ export async function getSessionProfile() {
 }
 
 export async function fetchAllProfiles() {
-  if (!supabase) return null;
   const { data, error } = await supabase.from('profiles').select('*');
   if (error) throw new Error(getErrMessage(error, 'Failed to fetch profiles'));
   return data || [];
 }
 
 export async function updateProfileRecord(id, patch) {
-  if (!supabase) return;
   const { error } = await supabase.from('profiles').update(patch).eq('id', id);
   if (error) throw new Error(getErrMessage(error, 'Failed to update profile'));
 }
