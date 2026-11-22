@@ -1,18 +1,26 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://sjgrcxtxgpwouuugetfl.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_K00IFS3IQMpDGkSnz0PYPw_0evx83D9';
+export const SUPABASE_URL = 'https://sjgrcxtxgpwouuugetfl.supabase.co';
+export const SUPABASE_ANON_KEY = 'sb_publishable_K00IFS3IQMpDGkSnz0PYPw_0evx83D9';
 
-const hasConfig =
-  SUPABASE_URL.startsWith('https://') &&
-  Boolean(SUPABASE_ANON_KEY) &&
-  !SUPABASE_ANON_KEY.includes('YOUR_SUPABASE_ANON_KEY');
+export const supabase =
+  SUPABASE_URL &&
+  SUPABASE_ANON_KEY &&
+  !SUPABASE_ANON_KEY.startsWith('sb_publishable_K00IFS3IQMpDGkSnz0PYPw_0evx83D9')
+    ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
 
-export const supabase = hasConfig
-  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  : null;
+export function isCloudEnabled() {
+  return Boolean(supabase);
+}
 
-export const isCloudEnabled = () => Boolean(supabase);
+function getErrMessage(err, fallback) {
+  if (!err) return fallback;
+  if (typeof err === 'string') return err;
+  if (err.message) return err.message;
+  if (err.error_description) return err.error_description;
+  return fallback;
+}
 
 export async function fetchProducts() {
   if (!supabase) return null;
@@ -20,92 +28,61 @@ export async function fetchProducts() {
     .from('products')
     .select('*')
     .order('created_at', { ascending: false });
-  if (error) throw error;
-  return (data || []).map((row) => ({
-    ...row,
-    price: Number(row.price),
-    stock: Number(row.stock),
-    spec: Array.isArray(row.spec) ? row.spec : [],
-  }));
+  if (error) throw new Error(getErrMessage(error, 'Failed to fetch products'));
+  return data || [];
 }
 
 export async function createProductRecord(prod) {
   if (!supabase) return prod;
   const { data, error } = await supabase
     .from('products')
-    .insert({
-      id: prod.id,
-      brand: prod.brand,
-      cat: prod.cat,
-      name: prod.name,
-      price: prod.price,
-      spec: prod.spec,
-      stock: prod.stock,
-      photo: prod.photo || '',
-    })
+    .insert(prod)
     .select()
     .single();
-  if (error) throw error;
+  if (error) throw new Error(getErrMessage(error, 'Failed to create product'));
   return data;
 }
 
 export async function updateProductRecord(id, patch) {
-  if (!supabase) return patch;
+  if (!supabase) return null;
   const { data, error } = await supabase
     .from('products')
     .update(patch)
     .eq('id', id)
     .select()
     .single();
-  if (error) throw error;
+  if (error) throw new Error(getErrMessage(error, 'Failed to update product'));
   return data;
 }
 
 export async function deleteProductRecord(id) {
   if (!supabase) return;
   const { error } = await supabase.from('products').delete().eq('id', id);
-  if (error) throw error;
+  if (error) throw new Error(getErrMessage(error, 'Failed to delete product'));
 }
 
 export async function uploadProductPhoto(productId, blob) {
-  if (!supabase) return null;
-  const filePath = `${productId}-${Date.now()}.jpg`;
+  if (!supabase || !blob) return null;
+  const path = `${productId}/${Date.now()}.jpg`;
   const { error } = await supabase.storage
     .from('product-photos')
-    .upload(filePath, blob, { contentType: 'image/jpeg', upsert: true });
-  if (error) throw error;
-  const { data } = supabase.storage
-    .from('product-photos')
-    .getPublicUrl(filePath);
-  return data.publicUrl;
+    .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
+  if (error) throw new Error(getErrMessage(error, 'Failed to upload photo'));
+  const { data } = supabase.storage.from('product-photos').getPublicUrl(path);
+  return data?.publicUrl || null;
 }
 
 export async function fetchVouchers() {
   if (!supabase) return null;
-  const { data, error } = await supabase
-    .from('vouchers')
-    .select('*')
-    .order('created_at', { ascending: true });
-  if (error) throw error;
-  return (data || []).map((v) => ({
-    code: v.code,
-    type: v.type,
-    value: Number(v.value),
-    min: Number(v.min_spend),
-    max: Number(v.max_disc),
-    active: Boolean(v.active),
-  }));
+  const { data, error } = await supabase.from('vouchers').select('*');
+  if (error) throw new Error(getErrMessage(error, 'Failed to fetch vouchers'));
+  return data || [];
 }
 
 export async function updateVoucherRecord(code, patch) {
   if (!supabase) return;
-  const dbPatch = {};
-  if ('active' in patch) dbPatch.active = patch.active;
-  const { error } = await supabase
-    .from('vouchers')
-    .update(dbPatch)
-    .eq('code', code);
-  if (error) throw error;
+  const { error } = await supabase.from('vouchers').update(patch).eq('code', code);
+  if (error) throw new Error(getErrMessage(error, 'Failed to update voucher'));
 }
 
 export async function fetchOrders() {
@@ -113,134 +90,180 @@ export async function fetchOrders() {
   const { data, error } = await supabase
     .from('orders')
     .select('*')
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return (data || []).map((o) => ({
-    id: o.id,
-    no: o.order_no,
-    uid: o.user_id,
-    cust: o.cust,
-    items: o.items,
-    addr: o.addr,
-    pay: o.pay,
-    ship: o.ship,
-    shipFee: Number(o.ship_fee),
-    voucher: o.voucher,
-    disc: Number(o.disc),
-    sub: Number(o.sub),
-    total: Number(o.total),
-    status: o.status,
-    log: o.log || [],
-    created: new Date(o.created_at).getTime(),
-  }));
+    .order('created', { ascending: false });
+  if (error) throw new Error(getErrMessage(error, 'Failed to fetch orders'));
+  return data || [];
 }
 
-export async function createOrderRecord(o) {
-  if (!supabase) return o;
-  const { error } = await supabase.from('orders').insert({
-    id: o.id,
-    order_no: o.no,
-    user_id: o.uid,
-    cust: o.cust,
-    items: o.items,
-    addr: o.addr,
-    pay: o.pay,
-    ship: o.ship,
-    ship_fee: o.shipFee,
-    voucher: o.voucher,
-    disc: o.disc,
-    sub: o.sub,
-    total: o.total,
-    status: o.status,
-    log: o.log,
-  });
-  if (error) throw error;
-  return o;
+export async function createOrderRecord(order) {
+  if (!supabase) return order;
+  const { data, error } = await supabase
+    .from('orders')
+    .insert(order)
+    .select()
+    .single();
+  if (error) throw new Error(getErrMessage(error, 'Failed to create order'));
+  return data;
 }
 
 export async function updateOrderRecord(id, patch) {
   if (!supabase) return;
   const { error } = await supabase.from('orders').update(patch).eq('id', id);
-  if (error) throw error;
-}
-
-export async function signUpUser({ name, email, password, phone }) {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { data: { name, phone } },
-  });
-  if (error) throw error;
-  const user = data.user;
-  if (!user) return null;
-  const profile = {
-    id: user.id,
-    email,
-    name,
-    phone,
-    role: 'customer',
-    active: true,
-    addrs: [],
-    pays: [],
-  };
-  const { error: pErr } = await supabase.from('profiles').upsert(profile);
-  if (pErr) throw pErr;
-  return profile;
-}
-
-export async function signInUser({ email, password }) {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-  if (error) throw error;
-  return getProfileById(data.user.id);
-}
-
-export async function signOutUser() {
-  if (!supabase) return;
-  const { error } = await supabase.auth.signOut();
-  if (error) throw error;
-}
-
-export async function getSessionProfile() {
-  if (!supabase) return null;
-  const { data } = await supabase.auth.getSession();
-  const uid = data?.session?.user?.id;
-  if (!uid) return null;
-  return getProfileById(uid);
+  if (error) throw new Error(getErrMessage(error, 'Failed to update order'));
 }
 
 export async function getProfileById(id) {
+  if (!supabase || !id) return null;
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', id)
     .single();
-  if (error) throw error;
-  return {
-    ...data,
-    addrs: Array.isArray(data.addrs) ? data.addrs : [],
-    pays: Array.isArray(data.pays) ? data.pays : [],
+  if (error) throw new Error(getErrMessage(error, 'Failed to load profile'));
+  return data;
+}
+
+export async function signUpUser({ name, email, password, phone }) {
+  if (!supabase) {
+    throw new Error(
+      'Supabase is not configured. Paste your Publishable key into SUPABASE_ANON_KEY in src/supabaseClient.js.'
+    );
+  }
+
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        name,
+        phone: phone || ''
+      }
+    }
+  });
+
+  if (error) {
+    throw new Error(getErrMessage(error, 'Sign up failed'));
+  }
+
+  const authUser = data?.user;
+  if (!authUser) {
+    throw new Error('Sign up did not return a user record.');
+  }
+
+  if (!data.session) {
+    return null;
+  }
+
+  const profileRow = {
+    id: authUser.id,
+    email: authUser.email || email,
+    name: name || authUser.email?.split('@')[0] || 'Customer',
+    phone: phone || '',
+    role: 'customer',
+    active: true
   };
+
+  const { data: upserted, error: profileErr } = await supabase
+    .from('profiles')
+    .upsert(profileRow, { onConflict: 'id' })
+    .select()
+    .single();
+
+  if (profileErr) {
+    throw new Error(
+      getErrMessage(profileErr, 'Account created, but saving profile failed')
+    );
+  }
+
+  return upserted || profileRow;
+}
+
+export async function signInUser({ email, password }) {
+  if (!supabase) {
+    throw new Error(
+      'Supabase is not configured. Paste your Publishable key into SUPABASE_ANON_KEY in src/supabaseClient.js.'
+    );
+  }
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    throw new Error(getErrMessage(error, 'Invalid email or password'));
+  }
+
+  const authUser = data?.user;
+  if (!authUser) {
+    throw new Error('Login failed: no user session found.');
+  }
+
+  try {
+    const profile = await getProfileById(authUser.id);
+    if (profile) return profile;
+  } catch {
+    // Fallback if profile row wasn't created yet
+  }
+
+  const fallbackProfile = {
+    id: authUser.id,
+    email: authUser.email || email,
+    name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
+    phone: authUser.user_metadata?.phone || '',
+    role: 'customer',
+    active: true
+  };
+
+  const { data: createdProfile, error: insertErr } = await supabase
+    .from('profiles')
+    .upsert(fallbackProfile, { onConflict: 'id' })
+    .select()
+    .single();
+
+  if (insertErr) {
+    return fallbackProfile;
+  }
+
+  return createdProfile || fallbackProfile;
+}
+
+export async function signOutUser() {
+  if (!supabase) return;
+  const { error } = await supabase.auth.signOut();
+  if (error) throw new Error(getErrMessage(error, 'Failed to log out'));
+}
+
+export async function getSessionProfile() {
+  if (!supabase) return null;
+  const { data, error } = await supabase.auth.getSession();
+  if (error) return null;
+  const authUser = data?.session?.user;
+  if (!authUser) return null;
+
+  try {
+    return await getProfileById(authUser.id);
+  } catch {
+    return {
+      id: authUser.id,
+      email: authUser.email || '',
+      name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
+      phone: authUser.user_metadata?.phone || '',
+      role: 'customer',
+      active: true
+    };
+  }
 }
 
 export async function fetchAllProfiles() {
   if (!supabase) return null;
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return (data || []).map((d) => ({
-    ...d,
-    addrs: Array.isArray(d.addrs) ? d.addrs : [],
-    pays: Array.isArray(d.pays) ? d.pays : [],
-  }));
+  const { data, error } = await supabase.from('profiles').select('*');
+  if (error) throw new Error(getErrMessage(error, 'Failed to fetch profiles'));
+  return data || [];
 }
 
 export async function updateProfileRecord(id, patch) {
   if (!supabase) return;
   const { error } = await supabase.from('profiles').update(patch).eq('id', id);
-  if (error) throw error;
+  if (error) throw new Error(getErrMessage(error, 'Failed to update profile'));
 }
