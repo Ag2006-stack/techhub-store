@@ -1,12 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
 export const SUPABASE_URL = 'https://sjgrcxtxgpwouuugetfl.supabase.co';
-export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqZ3JjeHR4Z3B3b3V1dWdldGZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUzNzMxMjgsImV4cCI6MjExMDk0OTEyOH0.Lx0tEwY5PPmiHTz7n34ArbmosaHGfybJB8u4rRkhe0c';
+export const SUPABASE_ANON_KEY = 'sb_publishable_K00IFS3IQMpDGkSnz0PYPw_0evx83D9';
 
 export const supabase =
   SUPABASE_URL &&
   SUPABASE_ANON_KEY &&
-  !SUPABASE_ANON_KEY.startsWith('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqZ3JjeHR4Z3B3b3V1dWdldGZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUzNzMxMjgsImV4cCI6MjExMDk0OTEyOH0.Lx0tEwY5PPmiHTz7n34ArbmosaHGfybJB8u4rRkhe0c')
+  !SUPABASE_ANON_KEY.startsWith('PASTE_YOUR_FULL_')
     ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     : null;
 
