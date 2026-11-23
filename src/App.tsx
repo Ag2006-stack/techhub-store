@@ -3,7 +3,9 @@ import {
   supabase,
   isCloudEnabled,
   fetchProducts,
+  createProductRecord,
   updateProductRecord,
+  deleteProductRecord,
   uploadProductPhoto,
   fetchOrders,
   createOrderRecord,
@@ -33,6 +35,10 @@ export interface CartItem {
   qty: number;
 }
 
+type ThemeMode = 'dark' | 'light';
+
+const THEME_STORAGE_KEY = 'techhub_theme_mode';
+
 const CAT_LABELS: Record<string, string> = {
   G: 'Graphics cards',
   M: 'Monitors',
@@ -54,7 +60,19 @@ function formatPhp(amount: number): string {
   return `₱${Number(amount || 0).toLocaleString('en-PH')}`;
 }
 
+function getInitialTheme(): ThemeMode {
+  try {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    if (saved === 'light' || saved === 'dark') return saved;
+  } catch {
+    // Ignore storage errors
+  }
+  return 'dark';
+}
+
 export default function App() {
+  const [theme, setTheme] = useState<ThemeMode>(() => getInitialTheme());
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string>('');
@@ -81,10 +99,37 @@ export default function App() {
   const [orders, setOrders] = useState<any[]>([]);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
 
+  // Admin product form state
+  const [adminOpen, setAdminOpen] = useState<boolean>(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [formBrand, setFormBrand] = useState<string>('');
+  const [formCat, setFormCat] = useState<string>('G');
+  const [formName, setFormName] = useState<string>('');
+  const [formPrice, setFormPrice] = useState<string>('');
+  const [formStock, setFormStock] = useState<string>('10');
+  const [formSpecs, setFormSpecs] = useState<string>('');
+  const [savingProduct, setSavingProduct] = useState<boolean>(false);
+
   const swipeTrackRef = useRef<HTMLDivElement | null>(null);
   const isDraggingRef = useRef<boolean>(false);
   const startXRef = useRef<number>(0);
   const scrollLeftRef = useRef<number>(0);
+
+  const isStaffOrAdmin =
+    profile?.role === 'admin' || profile?.role === 'staff';
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // Ignore storage errors
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -122,6 +167,7 @@ export default function App() {
         if (!session?.user) {
           setProfile(null);
           setOrders([]);
+          setAdminOpen(false);
         } else {
           getSessionProfile()
             .then((p: any) => setProfile(p))
@@ -185,6 +231,100 @@ export default function App() {
       ),
     [cart]
   );
+
+  const resetProductForm = () => {
+    setEditingProduct(null);
+    setFormBrand('');
+    setFormCat('G');
+    setFormName('');
+    setFormPrice('');
+    setFormStock('10');
+    setFormSpecs('');
+  };
+
+  const openEditProduct = (item: Product) => {
+    setEditingProduct(item);
+    setFormBrand(item.brand || '');
+    setFormCat(item.cat || 'A');
+    setFormName(item.name || '');
+    setFormPrice(String(item.price ?? ''));
+    setFormStock(String(item.stock ?? 0));
+    setFormSpecs(item.specs || item.description || '');
+    setAdminOpen(true);
+  };
+
+  const handleSaveProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isStaffOrAdmin || savingProduct) return;
+    setSavingProduct(true);
+    setErrorMsg('');
+
+    try {
+      const numericPrice = Math.max(0, Number(formPrice) || 0);
+      const numericStock = Math.max(0, parseInt(formStock, 10) || 0);
+      const cleanBrand = formBrand.trim() || 'Generic';
+      const cleanName = formName.trim();
+      const cleanSpecs = formSpecs.trim();
+      const categoryName = getCategoryLabel(formCat);
+
+      if (!cleanName) {
+        throw new Error('Product name is required');
+      }
+
+      if (editingProduct) {
+        await updateProductRecord(editingProduct.id, {
+          brand: cleanBrand,
+          cat: formCat,
+          category: categoryName,
+          name: cleanName,
+          price: numericPrice,
+          stock: numericStock,
+          specs: cleanSpecs,
+          description: cleanSpecs
+        } as any);
+        showToast(`Updated ${cleanName}`);
+      } else {
+        const newId = `prod-${Date.now()}`;
+        await createProductRecord({
+          id: newId,
+          brand: cleanBrand,
+          cat: formCat,
+          category: categoryName,
+          name: cleanName,
+          price: numericPrice,
+          stock: numericStock,
+          specs: cleanSpecs,
+          description: cleanSpecs,
+          image_url: '',
+          photo_url: ''
+        } as any);
+        showToast(`Added ${cleanName}`);
+      }
+
+      resetProductForm();
+      await loadStoreData();
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to save product';
+      setErrorMsg(msg);
+      showToast(msg);
+    } finally {
+      setSavingProduct(false);
+    }
+  };
+
+  const handleDeleteProduct = async (item: Product) => {
+    if (!isStaffOrAdmin) return;
+    setErrorMsg('');
+    try {
+      await deleteProductRecord(item.id);
+      setProducts((prev) => prev.filter((p) => p.id !== item.id));
+      showToast(`Deleted ${item.name}`);
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to delete product';
+      setErrorMsg(msg);
+      showToast(msg);
+    }
+  };
 
   const addToCart = (product: Product) => {
     if (product.stock <= 0) {
@@ -359,6 +499,7 @@ export default function App() {
       await signOutUser();
       setProfile(null);
       setOrders([]);
+      setAdminOpen(false);
       showToast('Signed out');
     } catch (err: any) {
       showToast(err?.message || 'Failed to sign out');
@@ -399,6 +540,9 @@ export default function App() {
           <span className="cloud-badge">
             {isCloudEnabled() ? 'Supabase Live' : 'Offline'}
           </span>
+          {profile?.role && (
+            <span className="role-badge">{profile.role}</span>
+          )}
         </div>
 
         <div className="topbar-controls">
@@ -409,6 +553,26 @@ export default function App() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label="Toggle dark or white mode"
+          >
+            {theme === 'dark' ? 'White Mode' : 'Dark Mode'}
+          </button>
+
+          {isStaffOrAdmin && (
+            <button
+              type="button"
+              onClick={() => {
+                resetProductForm();
+                setAdminOpen((prev) => !prev);
+              }}
+            >
+              {adminOpen ? 'Hide Admin' : 'Admin Tools'}
+            </button>
+          )}
 
           {profile ? (
             <div className="user-chip">
@@ -448,6 +612,86 @@ export default function App() {
         </section>
 
         {errorMsg && <div className="error-text">{errorMsg}</div>}
+
+        {isStaffOrAdmin && adminOpen && (
+          <section className="admin-panel">
+            <div className="admin-panel-header">
+              <h2>
+                {editingProduct
+                  ? `Edit Product (${editingProduct.id})`
+                  : 'Add New Product'}
+              </h2>
+              {editingProduct && (
+                <button type="button" onClick={resetProductForm}>
+                  Cancel Edit
+                </button>
+              )}
+            </div>
+
+            <form onSubmit={handleSaveProduct} className="admin-form-grid">
+              <input
+                type="text"
+                placeholder="Brand (e.g. ASUS, MSI)"
+                value={formBrand}
+                onChange={(e) => setFormBrand(e.target.value)}
+                required
+              />
+              <select
+                value={formCat}
+                onChange={(e) => setFormCat(e.target.value)}
+              >
+                {Object.entries(CAT_LABELS).map(([code, label]) => (
+                  <option key={code} value={code}>
+                    {label} ({code})
+                  </option>
+                ))}
+              </select>
+              <input
+                type="text"
+                placeholder="Product name"
+                className="admin-form-span-2"
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                required
+              />
+              <input
+                type="number"
+                placeholder="Price (PHP)"
+                min="0"
+                step="any"
+                value={formPrice}
+                onChange={(e) => setFormPrice(e.target.value)}
+                required
+              />
+              <input
+                type="number"
+                placeholder="Stock qty"
+                min="0"
+                value={formStock}
+                onChange={(e) => setFormStock(e.target.value)}
+                required
+              />
+              <input
+                type="text"
+                placeholder="Specs (semicolon-separated, e.g. 16GB GDDR7;PCIe 5.0)"
+                className="admin-form-span-2"
+                value={formSpecs}
+                onChange={(e) => setFormSpecs(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={savingProduct}
+              >
+                {savingProduct
+                  ? 'Saving...'
+                  : editingProduct
+                    ? 'Save Changes'
+                    : 'Add Product'}
+              </button>
+            </form>
+          </section>
+        )}
 
         <div className="cat-swipe-wrapper">
           <button
@@ -579,21 +823,36 @@ export default function App() {
                         Add to cart
                       </button>
 
-                      {profile && (
-                        <label className="upload-photo-btn">
-                          {uploadingId === item.id ? 'Uploading...' : 'Photo'}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            hidden
-                            disabled={uploadingId === item.id}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              e.target.value = '';
-                              handlePhotoUpload(item, file);
-                            }}
-                          />
-                        </label>
+                      {isStaffOrAdmin && (
+                        <>
+                          <label className="upload-photo-btn">
+                            {uploadingId === item.id ? 'Uploading...' : 'Photo'}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              hidden
+                              disabled={uploadingId === item.id}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                e.target.value = '';
+                                handlePhotoUpload(item, file);
+                              }}
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => openEditProduct(item)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-danger"
+                            onClick={() => handleDeleteProduct(item)}
+                          >
+                            Delete
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -610,7 +869,7 @@ export default function App() {
               {orders.map((ord) => (
                 <div key={ord.id} className="order-card">
                   <div>
-                    <strong>{ord.id}</strong> • <span>{ord.status || 'Pending'}</span>
+                    <strong>{ord.no || ord.id}</strong> • <span>{ord.status || 'Pending'}</span>
                   </div>
                   <div>Total: {formatPhp(ord.total)}</div>
                 </div>

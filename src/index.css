@@ -1,17 +1,58 @@
-:root {
+:root,
+:root[data-theme="dark"] {
   --bg-app: #080c14;
   --bg-surface: #0e1522;
   --bg-card: #121b2d;
   --bg-elevated: #18233a;
+  --bg-hover: #21304d;
   --bg-input: #0b101b;
   --border-subtle: rgba(148, 163, 184, 0.18);
   --border-strong: rgba(148, 163, 184, 0.35);
   --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;
-  --accent: #10b981;
-  --accent-hover: #059669;
-  --accent-soft: rgba(16, 185, 129, 0.16);
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-soft: rgba(59, 130, 246, 0.18);
+  --accent-text: #60a5fa;
+  --badge-bg: rgba(59, 130, 246, 0.18);
+  --badge-text: #93c5fd;
+  --role-bg: rgba(99, 102, 241, 0.2);
+  --role-text: #a5b4fc;
+  --header-bg: rgba(8, 12, 20, 0.94);
   --danger: #f87171;
+  --danger-bg: rgba(248, 113, 113, 0.14);
+  --danger-border: rgba(248, 113, 113, 0.38);
+  --danger-text: #fca5a5;
+  --toast-bg: #f8fafc;
+  --toast-text: #0f172a;
+}
+
+:root[data-theme="light"] {
+  --bg-app: #f4f7fb;
+  --bg-surface: #eef2f8;
+  --bg-card: #ffffff;
+  --bg-elevated: #e8eef7;
+  --bg-hover: #dce5f2;
+  --bg-input: #ffffff;
+  --border-subtle: rgba(15, 23, 42, 0.14);
+  --border-strong: rgba(15, 23, 42, 0.28);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: rgba(37, 99, 235, 0.12);
+  --accent-text: #1d4ed8;
+  --badge-bg: rgba(37, 99, 235, 0.12);
+  --badge-text: #1e40af;
+  --role-bg: rgba(79, 70, 229, 0.12);
+  --role-text: #3730a3;
+  --header-bg: rgba(255, 255, 255, 0.94);
+  --danger: #dc2626;
+  --danger-bg: rgba(220, 38, 38, 0.1);
+  --danger-border: rgba(220, 38, 38, 0.32);
+  --danger-text: #b91c1c;
+  --toast-bg: #0f172a;
+  --toast-text: #f8fafc;
 }
 
 *,
@@ -30,6 +71,7 @@ body {
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.5;
   overflow-x: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .topbar {
@@ -42,7 +84,7 @@ body {
   justify-content: space-between;
   gap: 10px;
   padding: 12px 16px;
-  background: rgba(8, 12, 20, 0.94);
+  background: var(--header-bg);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -65,9 +107,20 @@ body {
   font-weight: 600;
   padding: 3px 8px;
   border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: var(--badge-bg);
+  color: var(--badge-text);
+  border: 1px solid var(--accent-soft);
+}
+
+.role-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--role-bg);
+  color: var(--role-text);
+  border: 1px solid var(--border-subtle);
 }
 
 .topbar-controls {
@@ -100,7 +153,8 @@ body {
 }
 
 .app-root input:focus,
-.app-root select:focus {
+.app-root select:focus,
+.app-root textarea:focus {
   border-color: var(--accent) !important;
   box-shadow: 0 0 0 2px var(--accent-soft);
 }
@@ -130,7 +184,7 @@ body {
 
 .app-root button:hover,
 .upload-photo-btn:hover {
-  background-color: #21304d !important;
+  background-color: var(--bg-hover) !important;
   border-color: var(--border-strong) !important;
 }
 
@@ -138,12 +192,18 @@ body {
 .app-root .add-to-cart-btn {
   background-color: var(--accent) !important;
   border-color: var(--accent) !important;
-  color: #04130d !important;
+  color: #ffffff !important;
 }
 
 .app-root .btn-primary:hover,
 .app-root .add-to-cart-btn:hover {
   background-color: var(--accent-hover) !important;
+}
+
+.app-root .btn-danger {
+  background-color: var(--danger-bg) !important;
+  border-color: var(--danger-border) !important;
+  color: var(--danger-text) !important;
 }
 
 .app-root button:disabled {
@@ -171,6 +231,38 @@ body {
   margin: 0 0 14px;
   color: var(--text-secondary);
   font-size: 0.95rem;
+}
+
+.admin-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 18px;
+}
+
+.admin-panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.admin-panel-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+  gap: 10px;
+}
+
+.admin-form-span-2 {
+  grid-column: span 2;
 }
 
 .cat-swipe-wrapper {
@@ -216,7 +308,7 @@ body {
 .app-root .cat-pill.active {
   background-color: var(--accent) !important;
   border-color: var(--accent) !important;
-  color: #04130d !important;
+  color: #ffffff !important;
 }
 
 .app-root .cat-arrow {
@@ -285,7 +377,7 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .product-title {
@@ -320,19 +412,25 @@ body {
 
 .product-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
 
 .product-actions .add-to-cart-btn {
-  flex: 1;
+  flex: 1 1 100%;
+}
+
+.product-actions .upload-photo-btn,
+.product-actions button:not(.add-to-cart-btn) {
+  flex: 1 1 auto;
 }
 
 .modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgba(2, 6, 23, 0.76);
+  background: rgba(2, 6, 23, 0.72);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -420,13 +518,13 @@ body {
   left: 50%;
   transform: translateX(-50%);
   z-index: 80;
-  background: #f8fafc;
-  color: #0f172a;
+  background: var(--toast-bg);
+  color: var(--toast-text);
   font-weight: 600;
   font-size: 0.88rem;
   padding: 10px 16px;
   border-radius: 10px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
 }
 
 .error-text {
@@ -452,7 +550,10 @@ body {
 
 .order-card {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
+  gap: 10px;
   padding: 12px;
   border-radius: 10px;
   background: var(--bg-card);
@@ -460,6 +561,10 @@ body {
 }
 
 @media (max-width: 640px) {
+  .admin-form-span-2 {
+    grid-column: span 1;
+  }
+
   .products-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
