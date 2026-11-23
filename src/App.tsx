@@ -43,7 +43,7 @@ const CAT_LABELS: Record<string, string> = {
 };
 
 function getProductImage(item: Product): string {
-  return (item.image_url || item.photo_url || '').trim();
+  return String(item.image_url || item.photo_url || '').trim();
 }
 
 function getCategoryLabel(cat: string): string {
@@ -111,21 +111,24 @@ export default function App() {
     loadStoreData();
 
     getSessionProfile()
-      .then((sess) => {
+      .then((sess: any) => {
         if (sess) setProfile(sess);
       })
       .catch(() => {});
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session?.user) {
-        setProfile(null);
-        setOrders([]);
-      } else {
-        getSessionProfile()
-          .then((p) => setProfile(p))
-          .catch(() => {});
+    const client: any = supabase;
+    const { data: listener } = client?.auth?.onAuthStateChange(
+      (_event: any, session: any) => {
+        if (!session?.user) {
+          setProfile(null);
+          setOrders([]);
+        } else {
+          getSessionProfile()
+            .then((p: any) => setProfile(p))
+            .catch(() => {});
+        }
       }
-    });
+    ) || { data: null };
 
     return () => {
       listener?.subscription?.unsubscribe();
@@ -135,7 +138,7 @@ export default function App() {
   useEffect(() => {
     if (!profile) return;
     fetchOrders()
-      .then((rows) => setOrders(Array.isArray(rows) ? rows : []))
+      .then((rows: any) => setOrders(Array.isArray(rows) ? rows : []))
       .catch(() => {});
   }, [profile]);
 
@@ -175,7 +178,11 @@ export default function App() {
   );
 
   const cartSubtotal = useMemo(
-    () => cart.reduce((sum, entry) => sum + Number(entry.product.price || 0) * entry.qty, 0),
+    () =>
+      cart.reduce(
+        (sum, entry) => sum + Number(entry.product.price || 0) * entry.qty,
+        0
+      ),
     [cart]
   );
 
@@ -223,17 +230,28 @@ export default function App() {
     setErrorMsg('');
 
     try {
-      const orderPayload = {
+      const nowMs = Date.now();
+      const orderId = `ORD-${nowMs}`;
+      const customerName = profile?.name || 'Guest Customer';
+      const customerEmail = profile?.email || '';
+      const phone = profile?.phone || '';
+
+      const orderPayload: any = {
+        id: orderId,
+        no: orderId,
+        uid: profile?.id || null,
         user_id: profile?.id || null,
-        customer_email: profile?.email || '',
-        customer_name: profile?.name || 'Guest Customer',
-        phone: profile?.phone || '',
+        cust: customerName,
+        customer_name: customerName,
+        customer_email: customerEmail,
+        phone,
         address: '',
         payment_method: 'COD',
         subtotal: cartSubtotal,
         discount: 0,
         total: cartSubtotal,
         status: 'Pending',
+        created: nowMs,
         items: cart.map((c) => ({
           id: c.product.id,
           name: c.product.name,
@@ -247,7 +265,7 @@ export default function App() {
 
       for (const entry of cart) {
         const nextStock = Math.max(0, Number(entry.product.stock || 0) - entry.qty);
-        await updateProductRecord(entry.product.id, { stock: nextStock });
+        await updateProductRecord(entry.product.id, { stock: nextStock } as any);
       }
 
       setCart([]);
@@ -276,7 +294,7 @@ export default function App() {
       await updateProductRecord(product.id, {
         image_url: publicUrl,
         photo_url: publicUrl
-      });
+      } as any);
       setBrokenImages((prev) => {
         const next = { ...prev };
         delete next[product.id];
@@ -284,7 +302,9 @@ export default function App() {
       });
       setProducts((prev) =>
         prev.map((p) =>
-          p.id === product.id ? { ...p, image_url: publicUrl, photo_url: publicUrl } : p
+          p.id === product.id
+            ? { ...p, image_url: publicUrl, photo_url: publicUrl }
+            : p
         )
       );
       showToast(`Updated photo for ${product.name}`);
@@ -303,7 +323,7 @@ export default function App() {
     setErrorMsg('');
     try {
       if (authMode === 'login') {
-        const userProfile = await signInUser({
+        const userProfile: any = await signInUser({
           email: authEmail,
           password: authPassword
         });
@@ -311,7 +331,7 @@ export default function App() {
         setAuthOpen(false);
         showToast(`Welcome back, ${userProfile?.name || 'User'}!`);
       } else {
-        const userProfile = await signUpUser({
+        const userProfile: any = await signUpUser({
           name: authName,
           email: authEmail,
           password: authPassword,
