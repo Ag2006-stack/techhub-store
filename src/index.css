@@ -32,7 +32,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Header & Topbar */
 .topbar {
   position: sticky;
   top: 0;
@@ -88,7 +87,6 @@ body {
   color: var(--text-secondary);
 }
 
-/* Force dark theme on all inputs, selects, and buttons */
 .app-root input,
 .app-root select,
 .app-root textarea {
@@ -157,7 +155,6 @@ body {
   width: 100%;
 }
 
-/* Main Shell */
 .app-shell {
   width: 100%;
   max-width: 1280px;
@@ -176,7 +173,6 @@ body {
   font-size: 0.95rem;
 }
 
-/* Swipeable Category Bar with non-overlapping arrows */
 .cat-swipe-wrapper {
   display: flex;
   align-items: center;
@@ -233,7 +229,6 @@ body {
   font-size: 1.15rem;
 }
 
-/* Filter Bar */
 .filter-bar {
   display: flex;
   flex-wrap: wrap;
@@ -247,7 +242,6 @@ body {
   font-size: 0.9rem;
 }
 
-/* Product Grid & Cards */
 .products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -334,7 +328,6 @@ body {
   flex: 1;
 }
 
-/* Modals & Toast */
 .modal-backdrop {
   position: fixed;
   inset: 0;

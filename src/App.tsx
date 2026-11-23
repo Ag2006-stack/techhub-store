@@ -3,13 +3,10 @@ import {
   supabase,
   isCloudEnabled,
   fetchProducts,
-  createProductRecord,
   updateProductRecord,
-  deleteProductRecord,
   uploadProductPhoto,
   fetchOrders,
   createOrderRecord,
-  fetchVouchers,
   getSessionProfile,
   signInUser,
   signUpUser,
@@ -82,7 +79,6 @@ export default function App() {
   const [authSubmitting, setAuthSubmitting] = useState<boolean>(false);
 
   const [orders, setOrders] = useState<any[]>([]);
-  const [vouchers, setVouchers] = useState<any[]>([]);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
 
   const swipeTrackRef = useRef<HTMLDivElement | null>(null);
@@ -108,13 +104,6 @@ export default function App() {
       setErrorMsg(err?.message || 'Failed to load products from Supabase.');
     } finally {
       setLoadingProducts(false);
-    }
-
-    try {
-      const vList = await fetchVouchers();
-      setVouchers(Array.isArray(vList) ? vList : []);
-    } catch {
-      // Optional vouchers
     }
   };
 
