@@ -36,6 +36,8 @@ export interface CartItem {
 }
 
 type ThemeMode = 'dark' | 'light';
+type CheckoutStep = 'cart' | 'checkout';
+type PaymentMethod = 'COD' | 'GCash' | 'Maya' | 'Bank Transfer';
 
 const THEME_STORAGE_KEY = 'techhub_theme_mode';
 
@@ -85,7 +87,16 @@ export default function App() {
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState<boolean>(false);
+  const [checkoutStep, setCheckoutStep] = useState<CheckoutStep>('cart');
   const [placingOrder, setPlacingOrder] = useState<boolean>(false);
+
+  // Checkout customer & shipping fields
+  const [shipName, setShipName] = useState<string>('');
+  const [shipEmail, setShipEmail] = useState<string>('');
+  const [shipPhone, setShipPhone] = useState<string>('');
+  const [shipAddress, setShipAddress] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('COD');
+  const [paymentRef, setPaymentRef] = useState<string>('');
 
   const [profile, setProfile] = useState<any>(null);
   const [authOpen, setAuthOpen] = useState<boolean>(false);
@@ -126,6 +137,13 @@ export default function App() {
       // Ignore storage errors
     }
   }, [theme]);
+
+  useEffect(() => {
+    if (!profile) return;
+    if (!shipName && profile.name) setShipName(profile.name);
+    if (!shipEmail && profile.email) setShipEmail(profile.email);
+    if (!shipPhone && profile.phone) setShipPhone(profile.phone);
+  }, [profile, shipName, shipEmail, shipPhone]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -364,17 +382,27 @@ export default function App() {
     );
   };
 
-  const handlePlaceOrder = async () => {
+  const handleCheckoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (cart.length === 0 || placingOrder) return;
+
+    if (!shipName.trim() || !shipPhone.trim() || !shipAddress.trim()) {
+      const msg = 'Please fill out your name, phone number, and shipping address.';
+      setErrorMsg(msg);
+      showToast(msg);
+      return;
+    }
+
     setPlacingOrder(true);
     setErrorMsg('');
 
     try {
       const nowMs = Date.now();
       const orderId = `ORD-${nowMs}`;
-      const customerName = profile?.name || 'Guest Customer';
-      const customerEmail = profile?.email || '';
-      const phone = profile?.phone || '';
+      const customerName = shipName.trim();
+      const customerEmail = (shipEmail || profile?.email || '').trim();
+      const phone = shipPhone.trim();
+      const address = shipAddress.trim();
 
       const orderPayload: any = {
         id: orderId,
@@ -385,8 +413,9 @@ export default function App() {
         customer_name: customerName,
         customer_email: customerEmail,
         phone,
-        address: '',
-        payment_method: 'COD',
+        address,
+        payment_method: paymentMethod,
+        payment_ref: paymentRef.trim(),
         subtotal: cartSubtotal,
         discount: 0,
         total: cartSubtotal,
@@ -409,12 +438,14 @@ export default function App() {
       }
 
       setCart([]);
+      setPaymentRef('');
+      setCheckoutStep('cart');
       setCartOpen(false);
       if (created) {
         setOrders((prev) => [created, ...prev]);
       }
       await loadStoreData();
-      showToast('Order placed successfully!');
+      showToast(`Order placed via ${paymentMethod}!`);
     } catch (err: any) {
       const msg = err?.message || 'Failed to place order';
       setErrorMsg(msg);
@@ -596,7 +627,10 @@ export default function App() {
           <button
             type="button"
             className="btn-primary"
-            onClick={() => setCartOpen(true)}
+            onClick={() => {
+              setCheckoutStep('cart');
+              setCartOpen(true);
+            }}
           >
             Cart ({cartCount})
           </button>
@@ -869,7 +903,9 @@ export default function App() {
               {orders.map((ord) => (
                 <div key={ord.id} className="order-card">
                   <div>
-                    <strong>{ord.no || ord.id}</strong> • <span>{ord.status || 'Pending'}</span>
+                    <strong>{ord.no || ord.id}</strong> •{' '}
+                    <span>{ord.status || 'Pending'}</span> •{' '}
+                    <span>{ord.payment_method || 'COD'}</span>
                   </div>
                   <div>Total: {formatPhp(ord.total)}</div>
                 </div>
@@ -883,7 +919,11 @@ export default function App() {
         <div className="modal-backdrop" onClick={() => setCartOpen(false)}>
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Cart ({cartCount})</h2>
+              <h2>
+                {checkoutStep === 'cart'
+                  ? `Cart (${cartCount})`
+                  : 'Checkout & Shipping'}
+              </h2>
               <button type="button" onClick={() => setCartOpen(false)}>
                 ✕
               </button>
@@ -891,7 +931,7 @@ export default function App() {
 
             {cart.length === 0 ? (
               <p className="empty-state">Your cart is empty.</p>
-            ) : (
+            ) : checkoutStep === 'cart' ? (
               <>
                 <div className="cart-items">
                   {cart.map(({ product, qty }) => (
@@ -932,12 +972,84 @@ export default function App() {
                 <button
                   type="button"
                   className="btn-primary full-width"
-                  disabled={placingOrder}
-                  onClick={handlePlaceOrder}
+                  onClick={() => setCheckoutStep('checkout')}
                 >
-                  {placingOrder ? 'Placing Order...' : 'Place Order'}
+                  Proceed to Checkout
                 </button>
               </>
+            ) : (
+              <form onSubmit={handleCheckoutSubmit} className="auth-form">
+                <input
+                  type="text"
+                  placeholder="Full name"
+                  value={shipName}
+                  onChange={(e) => setShipName(e.target.value)}
+                  required
+                />
+                <input
+                  type="email"
+                  placeholder="Email address (optional)"
+                  value={shipEmail}
+                  onChange={(e) => setShipEmail(e.target.value)}
+                />
+                <input
+                  type="tel"
+                  placeholder="Phone number (e.g. 09XX XXX XXXX)"
+                  value={shipPhone}
+                  onChange={(e) => setShipPhone(e.target.value)}
+                  required
+                />
+                <textarea
+                  rows={2}
+                  placeholder="Complete shipping address (street, barangay, city)"
+                  value={shipAddress}
+                  onChange={(e) => setShipAddress(e.target.value)}
+                  required
+                />
+
+                <label className="cart-item-sub">Payment Method</label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) =>
+                    setPaymentMethod(e.target.value as PaymentMethod)
+                  }
+                >
+                  <option value="COD">Cash on Delivery (COD)</option>
+                  <option value="GCash">GCash</option>
+                  <option value="Maya">Maya</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                </select>
+
+                {paymentMethod !== 'COD' && (
+                  <input
+                    type="text"
+                    placeholder={`${paymentMethod} Reference / Sender Number (optional)`}
+                    value={paymentRef}
+                    onChange={(e) => setPaymentRef(e.target.value)}
+                  />
+                )}
+
+                <div className="cart-subtotal-row">
+                  <span>Total ({cartCount} items)</span>
+                  <strong>{formatPhp(cartSubtotal)}</strong>
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn-primary full-width"
+                  disabled={placingOrder}
+                >
+                  {placingOrder ? 'Placing Order...' : 'Confirm & Place Order'}
+                </button>
+
+                <button
+                  type="button"
+                  className="switch-auth-btn"
+                  onClick={() => setCheckoutStep('cart')}
+                >
+                  Back to Cart
+                </button>
+              </form>
             )}
           </div>
         </div>
