@@ -50,11 +50,7 @@ function getProductImage(item: Product): string {
 }
 
 function getCategoryLabel(cat: string): string {
-  return CAT_LABELS[cat] || itemCategoryFallback(cat);
-}
-
-function itemCategoryFallback(cat: string): string {
-  return cat || 'Accessories';
+  return CAT_LABELS[cat] || cat || 'Accessories';
 }
 
 function formatPhp(amount: number): string {
@@ -66,6 +62,7 @@ export default function App() {
   const [loadingProducts, setLoadingProducts] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [toastMsg, setToastMsg] = useState<string>('');
+  const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
 
   const [selectedCat, setSelectedCat] = useState<string>('ALL');
   const [selectedBrand, setSelectedBrand] = useState<string>('ALL');
@@ -106,6 +103,7 @@ export default function App() {
     try {
       const list = await fetchProducts();
       setProducts(Array.isArray(list) ? list : []);
+      setBrokenImages({});
     } catch (err: any) {
       setErrorMsg(err?.message || 'Failed to load products from Supabase.');
     } finally {
@@ -290,6 +288,11 @@ export default function App() {
         image_url: publicUrl,
         photo_url: publicUrl
       });
+      setBrokenImages((prev) => {
+        const next = { ...prev };
+        delete next[product.id];
+        return next;
+      });
       setProducts((prev) =>
         prev.map((p) =>
           p.id === product.id ? { ...p, image_url: publicUrl, photo_url: publicUrl } : p
@@ -378,9 +381,6 @@ export default function App() {
   const scrollCategoriesBy = (offset: number) => {
     swipeTrackRef.current?.scrollBy({ left: offset, behavior: 'smooth' });
   };
-
-  const canManageProducts =
-    profile?.role === 'admin' || profile?.role === 'staff';
 
   return (
     <div className="app-root">
@@ -518,6 +518,7 @@ export default function App() {
           <section className="products-grid">
             {filteredProducts.map((item) => {
               const imgUrl = getProductImage(item);
+              const showImage = Boolean(imgUrl) && !brokenImages[item.id];
               const specsList = (item.specs || item.description || '')
                 .split(';')
                 .map((s) => s.trim())
@@ -525,12 +526,15 @@ export default function App() {
 
               return (
                 <article key={item.id} className="product-card">
-                  {imgUrl ? (
+                  {showImage ? (
                     <img
                       src={imgUrl}
                       alt={item.name}
                       className="product-thumb"
                       loading="lazy"
+                      onError={() =>
+                        setBrokenImages((prev) => ({ ...prev, [item.id]: true }))
+                      }
                     />
                   ) : (
                     <div className="product-placeholder">
